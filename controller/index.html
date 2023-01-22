@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Hawkeye Control Centre!</title>
+</head>
+
+<body>
+    <button id="capture-button">Take a picture with all Pis!</button>
+    <div id="output"></div>
+
+    <script>
+        document.getElementById("capture-button").addEventListener("click", function () {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "/capture_image?exposure_sec=1", true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    document.getElementById("output").innerHTML = xhr.responseText;
+                }
+            };
+            xhr.send();
+        });
+    </script>
+</body>
+
+</html>
