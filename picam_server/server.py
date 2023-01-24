@@ -12,7 +12,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-TEMP_FILENAME = ".temp.png"
+TEMP_FILENAME = "/tmp/temp.jpg"
 
 
 def handle_post_capture():
@@ -33,7 +33,7 @@ def handle_post_capture():
     if i == 30:
         raise Exception("Image could not be saved (timeout)")
     # Rename the image from the temporary name to the date string
-    name = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S.png")
+    name = f"/home/picam/{datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S.jpg')}"
     os.rename(TEMP_FILENAME, name)
     print("Saved capture to:", name)
 
@@ -41,8 +41,8 @@ def handle_post_capture():
 def camera_take_image(exposure_sec) -> bool():
     """Low level function for talking to the camera"""
     print(f"Taking {exposure_sec} image...")
-
-    cmd = f"libcamera-still --autofocus --timestamp --output {TEMP_FILENAME}"
+    #--viewfinder-width 2312 --viewfinder-height 1736
+    cmd = f"libcamera-still -n -t 1 --autofocus-mode manual --lens-position 2 --denoise cdn_off --awb indoor --output {TEMP_FILENAME}"
 
     try:
         process = subprocess.Popen(
@@ -55,15 +55,15 @@ def camera_take_image(exposure_sec) -> bool():
 
         if error:
             print(error)
-            return False, error
+            #return False, error
         else:
             print(output)
 
             # At this point the exposure is being taken.
             # We need to loop until we see the output file
-            handle_post_capture()
+        handle_post_capture()
 
-            return True, ""
+        return True, ""
     except Exception as exc:
         error = f"Error running image capture! {exc}. Cmd={cmd}"
         print(error)
@@ -73,7 +73,8 @@ def camera_take_image(exposure_sec) -> bool():
 @app.route("/capture_image", methods=["GET"])
 def capture_image():
     """Web Method- triggered from a button on index.html"""
-
+    if os.path.exists(TEMP_FILENAME):
+        os.remove(TEMP_FILENAME)
     # Get any params from the web request
     exposure_sec = request.args.get("exposure_sec")
 

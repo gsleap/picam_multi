@@ -9,7 +9,7 @@ import concurrent.futures
 import requests
 from flask import Flask, render_template, request
 
-app = Flask(__name__, template_folder=".")
+app = Flask(__name__, template_folder="templates")
 
 # Change this list to be the IP addresses of your PI "servers"
 PI_SERVERS = ["127.0.0.1", "192.168.99.1", "192.168.99.2"]
@@ -66,4 +66,5 @@ def capture_image():
 
 
 if __name__ == "__main__":
-    app.run(port=8080)
+    #app.run(port=8080)
+    app.run(debug=True, port=8080, host='0.0.0.0')
