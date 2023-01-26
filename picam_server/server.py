@@ -6,6 +6,8 @@ https://github.com/makvoid/Blog-Articles/blob/9ebed1b877006a9eb602e9f58a3ef198b0
 import datetime
 import os
 import subprocess
+from signal import SIGUSR1
+from subprocess import Popen, DEVNULL
 from time import sleep
 from flask import Flask, request
 
@@ -42,33 +44,46 @@ def camera_take_image(exposure_sec) -> bool():
     """Low level function for talking to the camera"""
     print(f"Taking {exposure_sec} image...")
     #--viewfinder-width 2312 --viewfinder-height 1736
-    cmd = f"libcamera-still -n -t 1 --autofocus-mode manual --lens-position 2 --denoise cdn_off --awb indoor --output {TEMP_FILENAME}"
+    #cmd = f"libcamera-still -n -t 1 --autofocus-mode manual --lens-position 2 --denoise cdn_off --awb indoor --output {TEMP_FILENAME}"
 
+#     try:
+#         process = subprocess.Popen(
+#             cmd.split(" "),
+#             stdout=subprocess.PIPE,
+#             stderr=subprocess.PIPE,
+#             universal_newlines=True,
+#         )
+#         output, error = process.communicate()
+# 
+#         if error:
+#             print(error)
+#             #return False, error
+#         else:
+#             print(output)
+# 
+#             # At this point the exposure is being taken.
+#             # We need to loop until we see the output file
+#         handle_post_capture()
+# 
+#         return True, ""
+#     except Exception as exc:
+#         error = f"Error running image capture! {exc}. Cmd={cmd}"
+#         print(error)
+#         return False, error
+    
+   #daves modification for SIGUSR1  
     try:
-        process = subprocess.Popen(
-            cmd.split(" "),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True,
-        )
-        output, error = process.communicate()
-
-        if error:
-            print(error)
-            #return False, error
-        else:
-            print(output)
-
-            # At this point the exposure is being taken.
-            # We need to loop until we see the output file
+        process.send_signal(SIGUSR1)
         handle_post_capture()
-
         return True, ""
     except Exception as exc:
         error = f"Error running image capture! {exc}. Cmd={cmd}"
         print(error)
         return False, error
 
+#start camera
+cmd = f"libcamera-still -t 0 -n --autofocus-mode manual --lens-position 2 --denoise cdn_off --awb indoor --signal --output {TEMP_FILENAME}"
+process = Popen(cmd.split(' '), stdout=DEVNULL, stderr=DEVNULL)
 
 @app.route("/capture_image", methods=["GET"])
 def capture_image():
@@ -91,4 +106,4 @@ def capture_image():
 if __name__ == "__main__":
     # This code will run by simply calling python xxx where xxx is this filename.
     # app.run will execute the Flask server
-    app.run()
+    app.run(host="0.0.0.0")
