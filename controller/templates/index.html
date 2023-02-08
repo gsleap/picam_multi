@@ -19,6 +19,10 @@
             <div id="output"></div>
         </div>
         <div class="container">
+            <button id="servers-button" class="btn btn-dark">Check Pis!</button>
+            <div id="servers"></div>
+        </div>
+        <div class="container">
             <div id="stopwatch">
                 <div class="timerDisplay">
                     00:00:00:000
@@ -43,6 +47,20 @@
             xhr.onreadystatechange = function () {
                 if (xhr.readyState === 4 && xhr.status === 200) {
                     document.getElementById("output").innerHTML = xhr.responseText;
+                }
+            };
+            xhr.send();
+        };
+        document.getElementById("servers-button").addEventListener("click", function () {
+            checkServers();
+        });
+        
+        function checkServers() {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "/check_servers?exposure_sec=1", true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    document.getElementById("servers").innerHTML = xhr.responseText;
                 }
             };
             xhr.send();

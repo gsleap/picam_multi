@@ -12,7 +12,9 @@ from flask import Flask, render_template, request
 app = Flask(__name__, template_folder="templates")
 
 # Change this list to be the IP addresses of your PI "servers"
-PI_SERVERS = ["127.0.0.1", "192.168.2.119"]
+PI_SERVERS = ["127.0.0.1"]
+#PI_SERVERS = ["127.0.0.1", "192.168.2.119"]
+#PI_SERVERS = ["127.0.0.1", "192.168.1.119"]
 
 
 def fetch(url, params):
@@ -64,6 +66,37 @@ def capture_image():
 
     return output
 
+@app.route("/check_servers", methods=["GET"])
+def check_servers():
+    """
+    This method will run when there is a web request
+    for '/capture_image'
+    """
+    # Get parameters from web request
+    exposure_sec = request.args.get("exposure_sec")
+
+    # Generate URLS
+    urls = []
+    for server in PI_SERVERS:
+        url = f"http://{server}:5000/test_connection"
+        urls.append(url)
+
+    # Use a ThreadPoolExecutor to run the functions in parallel
+    output = ""
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        results = [
+            executor.submit(fetch, url, {"exposure_sec": exposure_sec})
+            for url in urls
+        ]
+        for f in concurrent.futures.as_completed(results):
+            try:
+                result = f.result()
+                print(result)
+                output += f"{result}</br>"
+            except Exception as exc:
+                output += f"Error:{url}</br>" #{exc}
+
+    return output
 
 if __name__ == "__main__":
     #app.run(port=8080)

@@ -6,6 +6,7 @@ https://github.com/makvoid/Blog-Articles/blob/9ebed1b877006a9eb602e9f58a3ef198b0
 import datetime
 import os
 import subprocess
+import socket
 from signal import SIGUSR1
 from subprocess import Popen, DEVNULL
 from time import sleep
@@ -14,8 +15,17 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-TEMP_FILENAME = "/tmp/temp.jpg"
+TEMP_FILENAME = "/tmp/temp.png"
 
+def get_network_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.bind(("0.0.0.0", 0))
+    s.connect(("8.8.8.8", 80))
+    return s.getsockname()[0]
+
+print(get_network_ip())
+myIP = get_network_ip()
+myHost = socket.getfqdn()
 
 def handle_post_capture():
     """
@@ -24,18 +34,19 @@ def handle_post_capture():
     i = 0
     # Wait for image to be captured
     print("Waiting for capture to save...")
-    while i < 30:
+    while i < 50:
         i += 1
         # Once detected, break the loop
         if os.path.exists(TEMP_FILENAME):
             break
         # Otherwise, wait for one second and try again
-        sleep(1)
+        sleep(0.2)
     # If the request timed out, exit
     if i == 30:
         raise Exception("Image could not be saved (timeout)")
+    print(f"looped for {i} seconds")
     # Rename the image from the temporary name to the date string
-    name = f"/home/picam/{datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S.jpg')}"
+    name = f"/home/picam/{datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S.png')}"
     os.rename(TEMP_FILENAME, name)
     print("Saved capture to:", name)
 
@@ -73,7 +84,9 @@ def camera_take_image(exposure_sec) -> bool():
     
    #daves modification for SIGUSR1  
     try:
+        
         process.send_signal(SIGUSR1)
+        print ("image taken starting post")
         handle_post_capture()
         return True, ""
     except Exception as exc:
@@ -82,7 +95,11 @@ def camera_take_image(exposure_sec) -> bool():
         return False, error
 
 #start camera
-cmd = f"libcamera-still -t 0 -n --autofocus-mode manual --lens-position 2 --denoise cdn_off --awb indoor --signal --output {TEMP_FILENAME}"
+#--width 9152 --height 6944
+#--lens-position 1
+#cmd = f"libcamera-still -t 0 -n  --autofocus-mode manual --lens-position 2 --gain 8 --shutter 30000 --denoise cdn_off --awb indoor --width 7908 --height 6000 --signal -e png --output {TEMP_FILENAME}"
+
+cmd = f"libcamera-still -t 0 -n  --autofocus-mode manual --lens-position 2 --denoise cdn_off --awb indoor --signal -e png --output {TEMP_FILENAME}"
 process = Popen(cmd.split(' '), stdout=DEVNULL, stderr=DEVNULL)
 
 @app.route("/capture_image", methods=["GET"])
@@ -101,6 +118,22 @@ def capture_image():
         return f"Captured image {exposure_sec}"
     else:
         return f"Failed to capture image {error}!"
+
+@app.route("/test_connection", methods=["GET"])
+def test_connection():
+    """Web Method- triggered from a button on index.html"""
+    #if os.path.exists(TEMP_FILENAME):
+        #os.remove(TEMP_FILENAME)
+    # Get any params from the web request
+    exposure_sec = request.args.get("exposure_sec")
+
+    # Actually tell the camera to take an image
+    #result, error = camera_take_image(float(exposure_sec))
+    
+    # Did it work?
+    return f"Online: {myHost}:{myIP}"
+    
+
 
 
 if __name__ == "__main__":
