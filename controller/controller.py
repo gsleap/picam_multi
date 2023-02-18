@@ -12,7 +12,7 @@ from flask import Flask, render_template, request
 app = Flask(__name__, template_folder="templates")
 
 # Change this list to be the IP addresses of your PI "servers"
-PI_SERVERS = ["127.0.0.1"]
+PI_SERVERS = ["127.0.0.1","192.168.2.126"]
 #PI_SERVERS = ["127.0.0.1", "192.168.2.119"]
 #PI_SERVERS = ["127.0.0.1", "192.168.1.119"]
 

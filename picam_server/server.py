@@ -11,7 +11,7 @@ from signal import SIGUSR1
 from subprocess import Popen, DEVNULL
 from time import sleep
 from flask import Flask, request
-
+import shutil
 
 app = Flask(__name__)
 
@@ -42,7 +42,7 @@ def handle_post_capture():
         # Otherwise, wait for one second and try again
         sleep(0.2)
     # If the request timed out, exit
-    if i == 30:
+    if i == 50:
         raise Exception("Image could not be saved (timeout)")
     print(f"looped for {i} seconds")
     # Rename the image from the temporary name to the date string
@@ -86,8 +86,12 @@ def camera_take_image(exposure_sec) -> bool():
     try:
         
         process.send_signal(SIGUSR1)
+        #process = Popen(cmd.split(' '), stdout=DEVNULL, stderr=DEVNULL)
         print ("image taken starting post")
-        handle_post_capture()
+        
+        # not doing post capture while files are just written out with --datetime
+        
+        #handle_post_capture()
         return True, ""
     except Exception as exc:
         error = f"Error running image capture! {exc}. Cmd={cmd}"
@@ -97,9 +101,13 @@ def camera_take_image(exposure_sec) -> bool():
 #start camera
 #--width 9152 --height 6944
 #--lens-position 1
-#cmd = f"libcamera-still -t 0 -n  --autofocus-mode manual --lens-position 2 --gain 8 --shutter 30000 --denoise cdn_off --awb indoor --width 7908 --height 6000 --signal -e png --output {TEMP_FILENAME}"
+#cmd = f"libcamera-still -t 0 -n  --autofocus-mode manual --lens-position 2 --gain 8 --shutter 30000 --denoise cdn_off --awb indoor --immediate --width 7908 --height 6000 --signal -e png --output {TEMP_FILENAME}"
 
-cmd = f"libcamera-still -t 0 -n  --autofocus-mode manual --lens-position 2 --denoise cdn_off --awb indoor --signal -e png --output {TEMP_FILENAME}"
+#would love to use --immediate below as it is fast but doesnt allow a second image to be taken....
+
+cmd = f"libcamera-still -t 0 -n  --autofocus-mode manual --lens-position 2 --denoise cdn_off --gain 9 --shutter 10000 --awbgains 2.0,1.8 --signal -e png --datetime"
+
+#cmd = f"libcamera-still -t 10000 -n  --autofocus-mode manual --lens-position 2 --denoise cdn_off --gain 9 --shutter 10000 --awbgains 2.0,1.8 --timelapse  1000 --datetime"
 process = Popen(cmd.split(' '), stdout=DEVNULL, stderr=DEVNULL)
 
 @app.route("/capture_image", methods=["GET"])
