@@ -105,7 +105,7 @@ def camera_take_image(exposure_sec) -> bool():
 
 #would love to use --immediate below as it is fast but doesnt allow a second image to be taken....
 
-cmd = f"libcamera-still -t 0 -n  --autofocus-mode manual --lens-position 2 --denoise cdn_off --gain 9 --shutter 10000 --awbgains 2.0,1.8 --signal -e png --datetime"
+cmd = f"libcamera-still -t 0 -n  --autofocus-mode manual --lens-position 2 --width 9152 --height 6944 --denoise cdn_off --gain 9 --shutter 10000 --awbgains 2.0,1.8 --signal --datetime"
 
 #cmd = f"libcamera-still -t 10000 -n  --autofocus-mode manual --lens-position 2 --denoise cdn_off --gain 9 --shutter 10000 --awbgains 2.0,1.8 --timelapse  1000 --datetime"
 process = Popen(cmd.split(' '), stdout=DEVNULL, stderr=DEVNULL)
