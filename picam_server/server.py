@@ -15,6 +15,7 @@ import shutil
 
 app = Flask(__name__)
 
+
 TEMP_FILENAME = "/tmp/temp.png"
 
 def get_network_ip():
@@ -105,10 +106,27 @@ def camera_take_image(exposure_sec) -> bool():
 
 #would love to use --immediate below as it is fast but doesnt allow a second image to be taken....
 
-cmd = f"libcamera-still -t 0 -n  --autofocus-mode manual --lens-position 2 --width 9152 --height 6944 --denoise cdn_off --gain 9 --shutter 10000 --awbgains 2.0,1.8 --signal --datetime"
+# many questions for GSleap about creating this cmd especially around being able to iterate into the framestart or push variables to the framename
+#also abou quitting this cmd / restarting it.
 
-#cmd = f"libcamera-still -t 10000 -n  --autofocus-mode manual --lens-position 2 --denoise cdn_off --gain 9 --shutter 10000 --awbgains 2.0,1.8 --timelapse  1000 --datetime"
-process = Popen(cmd.split(' '), stdout=DEVNULL, stderr=DEVNULL)
+
+cmd = f"libcamera-still -t 0 -n  --autofocus-mode manual --lens-position 2 --width 9152 --height 6944 --denoise cdn_off --gain 9 --shutter 10000 --awbgains 2.0,1.8 --signal -o PiCam1_%04d.jpg --framestart 1"
+global process
+process = Popen(cmd.split(' '), stdout=DEVNULL, stderr=DEVNULL) 
+
+
+
+#was tying to have this in a function to restart the camera but it doesnot seem to work
+def start_cam():
+    #this one doesnt work where SIGUSR1 does.... cant recall where I got SIGUSR1 from
+    process.send_signal(SIGUSR2)
+
+        
+    #cmd = f"libcamera-still -t 10000 -n  --autofocus-mode manual --lens-position 2 --denoise cdn_off --gain 9 --shutter 10000 --awbgains 2.0,1.8 --timelapse  1000 --datetime"
+    #process = Popen(cmd.split(' '), stdout=DEVNULL, stderr=DEVNULL)         
+
+    
+    
 
 @app.route("/capture_image", methods=["GET"])
 def capture_image():
@@ -139,6 +157,7 @@ def test_connection():
     #result, error = camera_take_image(float(exposure_sec))
     
     # Did it work?
+    #start_cam()
     return f"Online: {myHost}:{myIP}"
     
 
